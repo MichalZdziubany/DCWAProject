@@ -138,8 +138,37 @@ app.post('/students/add', async (req, res) => {
     res.redirect('/students');
 })
 
-app.get('/grades', (req, res) => {
-    res.render('grades');
+app.get('/grades', async (req, res) => {
+    const gradesData = await pool.query(`
+        SELECT student.name AS studentName, 
+               module.name AS moduleName, 
+               grade.grade AS grade
+        FROM student 
+        LEFT JOIN grade ON student.sid = grade.sid 
+        LEFT JOIN module ON grade.mid = module.mid 
+        ORDER BY student.name ASC, grade.grade ASC;
+      `);
+
+    const studentGrades = gradesData.reduce((acc, row) => {
+      const { studentName, moduleName, grade } = row;
+
+      //if the student doesn't exist in the accumulator, initialize them
+      if (!acc[studentName]) {
+        acc[studentName] = [];
+      }
+
+      //add module and grade for the student, handling missing module
+      if (moduleName) {
+        acc[studentName].push({ moduleName, grade });
+      } else {
+        acc[studentName].push({ moduleName: ' ', grade: ' ' });
+      }
+
+      return acc;
+    }, {});
+
+    // Render the grades page with the grouped data
+    res.render('grades', { studentGrades });
 });
 
 app.get('/lecturers', (req, res) => {
