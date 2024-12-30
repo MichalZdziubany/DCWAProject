@@ -4,6 +4,11 @@ const app = express();
 const port = 3004;
 
 app.set('view engine', 'ejs')
+// Middleware to parse JSON request bodies
+app.use(express.json());
+
+// Middleware to parse URL-encoded request bodies
+app.use(express.urlencoded({ extended: true }));
 
 //promise mysql connection pool
 var pmysql = require('promise-mysql')
@@ -51,6 +56,48 @@ app.get('/students', async (req, res) => {
 
     res.render('students', { students });
 });
+
+app.get('/students/edit/:sid', async (req, res) => {
+    const sid = req.params.sid;
+
+    const student = await pool.query("select * from student where sid = ?", [sid])
+
+    if(!student){
+        console.log("No student found")
+    }
+    else{
+        res.render('updateStudent', {student: student[0], errors: []})
+    }
+})
+
+app.post('/students/edit/:sid', async (req, res) =>{
+    const sid = req.params.sid;
+    const {name, age} = req.body;
+    const errors = [];
+
+    if(!name || name.length < 2){
+        errors.push('Name should be more than 2 characters');
+    }
+
+    if(!age || age < 18){
+        errors.push('Age must be atleast 18');
+    }
+
+    if (errors.length > 0) {
+        //render the form again with error messages and the previously entered data
+        return res.render('updateStudent', { 
+          student: { sid, name, age }, 
+          errors 
+        });
+    }
+
+    await pool.query(
+        'update student set name = ?, age = ? where sid = ?',[name, age, sid]
+    );
+
+    res.redirect('/students');
+    
+})
 
 app.get('/grades', (req, res) => {
     res.render('grades');
