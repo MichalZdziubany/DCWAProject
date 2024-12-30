@@ -76,11 +76,11 @@ app.post('/students/edit/:sid', async (req, res) =>{
     const errors = [];
 
     if(!name || name.length < 2){
-        errors.push('Name should be more than 2 characters');
+        errors.push('Student Name should be more than 2 characters');
     }
 
     if(!age || age < 18){
-        errors.push('Age must be atleast 18');
+        errors.push('Student Age must be atleast 18');
     }
 
     if (errors.length > 0) {
@@ -96,7 +96,46 @@ app.post('/students/edit/:sid', async (req, res) =>{
     );
 
     res.redirect('/students');
-    
+
+})
+
+app.get('/students/add', (req, res) => {
+    res.render('addStudent', {errors: [], student: {}});
+})
+
+app.post('/students/add', async (req, res) => {
+    const {sid, name, age} = req.body;
+    const errors = [];
+
+    if(!sid || sid.length !== 4){
+        errors.push('Student ID must be exactly 4 characters');
+    }
+
+    if(!name || name.length < 2){
+        errors.push('Student Name should be more than 2 characters');
+    }
+
+    if(!age || age < 18){
+        errors.push('Student Age must be atleast 18');
+    }
+
+    const existingStudent = await pool.query('SELECT * FROM student WHERE sid = ?', [sid]);
+
+    if (existingStudent.length > 0) {
+      errors.push(`Student with ID ${sid} already exists.`);
+    }
+
+    if (errors.length > 0) {
+        //render the form again with error messages and the previously entered data
+        return res.render('addStudent', { 
+          student: { sid, name, age }, 
+          errors 
+        });
+    }
+
+    await pool.query('INSERT INTO student (sid, name, age) VALUES (?, ?, ?)', [sid, name, age]);
+
+    res.redirect('/students');
 })
 
 app.get('/grades', (req, res) => {
