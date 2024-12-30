@@ -3,7 +3,7 @@
     <h1>Update Student</h1>
 </head>
 <body>
-
+    <!--display errors to screen-->
     <% if (errors && errors.length > 0) { %>
         <ul>
           <% errors.forEach(function(message) { %>
@@ -11,7 +11,8 @@
           <% }); %>
         </ul>
       <% } %>
-
+    
+    <!--form to update student-->
     <form action="/students/edit/<%= student.sid %>" method="POST">
         <label for="sid">Student ID (not editable):</label>
         <input type="text" id="sid" name="sid" value="<%= student.sid %>" readonly><br><br>

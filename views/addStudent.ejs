@@ -3,7 +3,7 @@
     <h1>Add Student</h1>
 </head>
 <body>
-
+    <!--display errors-->
     <% if (errors && errors.length > 0) { %>
         <ul>
           <% errors.forEach(function(message) { %>
@@ -11,7 +11,8 @@
           <% }); %>
         </ul>
       <% } %>
-
+    
+    <!--form to add a student-->
     <form action="/students/add" method="POST">
         <label for="sid">Student ID:</label>
         <input type="text" id="sid" name="sid" value="<%= student.sid || '' %>"><br><br>

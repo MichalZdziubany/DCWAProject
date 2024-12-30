@@ -75,6 +75,7 @@ app.post('/students/edit/:sid', async (req, res) =>{
     const {name, age} = req.body;
     const errors = [];
 
+    //error checking to see if input complies
     if(!name || name.length < 2){
         errors.push('Student Name should be more than 2 characters');
     }
@@ -107,6 +108,7 @@ app.post('/students/add', async (req, res) => {
     const {sid, name, age} = req.body;
     const errors = [];
 
+    //error checking
     if(!sid || sid.length !== 4){
         errors.push('Student ID must be exactly 4 characters');
     }
@@ -119,6 +121,7 @@ app.post('/students/add', async (req, res) => {
         errors.push('Student Age must be atleast 18');
     }
 
+    //check if sid is unique
     const existingStudent = await pool.query('SELECT * FROM student WHERE sid = ?', [sid]);
 
     if (existingStudent.length > 0) {
@@ -133,22 +136,23 @@ app.post('/students/add', async (req, res) => {
         });
     }
 
-    await pool.query('INSERT INTO student (sid, name, age) VALUES (?, ?, ?)', [sid, name, age]);
+    await pool.query('insert into student (sid, name, age) values (?, ?, ?)', [sid, name, age]);
 
     res.redirect('/students');
 })
 
 app.get('/grades', async (req, res) => {
     const gradesData = await pool.query(`
-        SELECT student.name AS studentName, 
-               module.name AS moduleName, 
-               grade.grade AS grade
-        FROM student 
-        LEFT JOIN grade ON student.sid = grade.sid 
-        LEFT JOIN module ON grade.mid = module.mid 
-        ORDER BY student.name ASC, grade.grade ASC;
+        select student.name as studentName, 
+               module.name as moduleName, 
+               grade.grade as grade
+        from student 
+        left join grade on student.sid = grade.sid 
+        left join module on grade.mid = module.mid 
+        order by student.name asc, grade.grade asc;
       `);
 
+    //break down the data from the query
     const studentGrades = gradesData.reduce((acc, row) => {
       const { studentName, moduleName, grade } = row;
 
@@ -167,13 +171,32 @@ app.get('/grades', async (req, res) => {
       return acc;
     }, {});
 
-    // Render the grades page with the grouped data
+    //render the grades page with the grouped data
     res.render('grades', { studentGrades });
 });
 
-app.get('/lecturers', (req, res) => {
-    res.render('lecturers');
+app.get('/lecturers', async (req, res) => {
+    //sort lecturers by id
+    const lecturers = await Lecturer.find({}).sort({ _id: 1 });
+
+    res.render('lecturers', {lecturers});
   });
+
+app.get('/lecturers/delete/:lid', async (req, res) =>{
+    const lid = req.params.lid;
+
+    //find the lecturer
+    const lecturer = await Lecturer.findById(lid);
+
+    //make sure the lecturer has no modules attached to them
+    if(lecturer.did){
+        return res.render('deleteLecturer', {lid});
+    }
+
+    await Lecturer.deleteOne({_id:lid});
+
+    res.redirect('lecturers');
+})
 
 //start the server
 app.listen(port, () => {
