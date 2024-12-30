@@ -22,13 +22,34 @@ pmysql.createPool({
         console.log("pool error:" + e)
     })
 
+const mongoose = require('mongoose');
+mongoose.connect('mongodb://localhost:27017/proj2024MongoDB', {
+
+})
+.then(() => {
+    console.log('Successfully connected to MongoDB');
+  })
+  .catch((error) => {
+    console.error('Error connecting to MongoDB:', error.message);
+  });;
+
+const lecturerSchema = new mongoose.Schema({
+    _id: String,
+    name: String,
+    did: String
+});
+
+const Lecturer = mongoose.model('Lecturer', lecturerSchema);
+
 //define routes for ejs files
 app.get('/', (req, res) => {
   res.render('home');
 });
 
-app.get('/students', (req, res) => {
-    res.render('students');
+app.get('/students', async (req, res) => {
+    const students = await pool.query("select * from student order by sid")
+
+    res.render('students', { students });
 });
 
 app.get('/grades', (req, res) => {
